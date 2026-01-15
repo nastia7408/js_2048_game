@@ -5,7 +5,7 @@
  * Now it has a basic structure, that is needed for testing.
  * Feel free to add more props and methods if needed.
  */
-class Game {
+export default class Game {
   /**
    * Creates a new game instance.
    *
@@ -21,24 +21,81 @@ class Game {
    * initial state.
    */
   constructor(initialState) {
+    this.field = initialState || [
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+    ];
+
+    this.score = 0;
+    this.gameStatus = 'idle';
+
     // eslint-disable-next-line no-console
     console.log(initialState);
   }
 
-  moveLeft() {}
-  moveRight() {}
-  moveUp() {}
-  moveDown() {}
+  moveLeft() {
+    const prevState = JSON.stringify(this.field);
+
+    this.field = this.field.map((row) => {
+      const filteredRow = row.filter((cell) => cell !== 0);
+
+      for (let i = 0; i < filteredRow.length - 1; i++) {
+        if (filteredRow[i] === filteredRow[i + 1]) {
+          filteredRow[i] *= 2;
+          this.score += filteredRow[i];
+          filteredRow[i + 1] = 0;
+          i++;
+        }
+      }
+
+      const resultRow = filteredRow.filter((cell) => cell !== 0);
+
+      while (resultRow.length < 4) {
+        resultRow.push(0);
+      }
+
+      return resultRow;
+    });
+
+    if (prevState !== JSON.stringify(this.field)) {
+      this.addRandomTile();
+      this.checkWin();
+      this.checkGameOver();
+    }
+  }
+  moveRight() {
+    this.field = this.field.map((row) => row.reverse());
+
+    this.moveLeft();
+
+    this.field = this.field.map((row) => row.reverse());
+  }
+  moveUp() {
+    this.transpose();
+    this.moveLeft();
+    this.transpose();
+  }
+  moveDown() {
+    this.transpose();
+    this.moveRight();
+    this.transpose();
+  }
 
   /**
    * @returns {number}
    */
-  getScore() {}
+  getScore() {
+    return this.score;
+  }
 
   /**
    * @returns {number[][]}
    */
-  getState() {}
+  getState() {
+    return this.field;
+  }
 
   /**
    * Returns the current game status.
@@ -50,19 +107,88 @@ class Game {
    * `win` - the game is won;
    * `lose` - the game is lost
    */
-  getStatus() {}
+  getStatus() {
+    return this.gameStatus;
+  }
 
   /**
    * Starts the game.
    */
-  start() {}
+  start() {
+    this.gameStatus = 'playing';
+    this.addRandomTile();
+    this.addRandomTile();
+  }
 
   /**
    * Resets the game.
    */
-  restart() {}
 
   // Add your own methods here
-}
+  addRandomTile() {
+    const emptyCells = [];
 
-module.exports = Game;
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 4; c++) {
+        if (this.field[r][c] === 0) {
+          emptyCells.push({ r, c });
+        }
+      }
+    }
+
+    if (emptyCells.length > 0) {
+      const randomCell =
+        emptyCells[Math.floor(Math.random() * emptyCells.length)];
+
+      this.field[randomCell.r][randomCell.c] = Math.random() < 0.1 ? 4 : 2;
+    }
+  }
+
+  transpose() {
+    this.field = this.field[0].map((_, colIndex) => {
+      return this.field.map((row) => row[colIndex]);
+    });
+  }
+
+  checkWin() {
+    const has2048 = this.field.some((row) => row.includes(2048));
+
+    if (has2048) {
+      this.gameStatus = 'win';
+    }
+  }
+
+  checkGameOver() {
+    if (this.field.some((row) => row.includes(0))) {
+      return;
+    }
+
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 4; c++) {
+        const current = this.field[r][c];
+
+        if (c < 3 && current === this.field[r][c + 1]) {
+          return;
+        }
+
+        if (r < 3 && current === this.field[r + 1][c]) {
+          return;
+        }
+      }
+    }
+
+    this.gameStatus = 'lose';
+  }
+
+  restart() {
+    this.field = [
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+    ];
+    this.score = 0;
+    this.gameStatus = 'idle';
+    this.start();
+  }
+}

@@ -11,11 +11,11 @@ body {
 }
 
 .field-cell {
-  background: #d6cdc4;
+  background: #bea991;
   width: 75px;
   height: 75px;
-  border-radius: 5px;
-  color: #776e65;
+  border-radius: 10px;
+  color: rgb(117 100 82);
   box-sizing: border-box;
   text-align: center;
   vertical-align: center;
@@ -76,9 +76,9 @@ body {
 }
 
 .game-field {
-  background: #bbada0;
+  background: rgb(169, 148, 123);
   border-spacing: 10px;
-  border-radius: 5px;
+  border-radius: 20px;
 }
 
 .game-header {
@@ -91,11 +91,10 @@ body {
 }
 
 h1 {
-  background: #edc22e;
-  color: #f9f6f2;
+  color: rgb(102, 89, 71);
   width: 75px;
   height: 75px;
-  font-size: 24px;
+  font-size: 50px;
   border-radius: 5px;
   display: flex;
   align-items: center;
@@ -109,11 +108,11 @@ h1 {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #d6cdc4;
+  background: rgb(231, 223, 214);
   width: 75px;
   height: 75px;
   border-radius: 5px;
-  color: #776e65;
+  color: rgb(102, 89, 71);
   box-sizing: border-box;
   font-size: 16px;
   margin: 0 8px 0 0;
@@ -138,19 +137,13 @@ h1 {
 }
 
 .start {
-  background: #1dae28;
+  color: rgb(102, 89, 71);
+  background-color: #fbf8ef;
+  border: 2px solid rgb(231, 223, 214);
   font-size: 20px;
 
   &:hover {
-    background: #179921;
-  }
-}
-
-.restart {
-  background: #f1b2b2;
-
-  &:hover {
-    background: #f87474;
+    background: rgb(231, 223, 214);
   }
 }
 
