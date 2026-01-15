@@ -8,7 +8,7 @@ import Game from '../modules/Game.class.js';
 const game = new Game();
 
 const startBtn = document.querySelector('.start');
-const scoreElement = document.querySelector('.game-score');
+const restartBtn = document.querySelector('.restart');
 const statusMessages = {
   start: document.querySelector('.message-start'),
   win: document.querySelector('.message-win'),
@@ -18,10 +18,11 @@ const statusMessages = {
 const cells = document.querySelectorAll('.field-cell');
 
 function render() {
-  const state = game.getState();
+  const gameStatus = game.getStatus();
   const score = game.getScore();
+  const state = game.getState();
 
-  scoreElement.textContent = score;
+  document.querySelector('.game-score').textContent = score;
 
   const flatField = state.flat();
 
@@ -32,27 +33,35 @@ function render() {
 
     cell.className = 'field-cell';
 
-    if (value !== 0) {
+    if (value > 0) {
       cell.classList.add(`field-cell--${value}`);
     }
   });
 
-  updateStatusMessages(state);
-}
-
-function updateStatusMessages(gameStatus) {
-  statusMessages.start.classList.toggle('hidden', gameStatus !== 'idle');
-  statusMessages.win.classList.toggle('hidden', gameStatus !== 'win');
   statusMessages.lose.classList.toggle('hidden', gameStatus !== 'lose');
+  statusMessages.win.classList.toggle('hidden', gameStatus !== 'win');
+  statusMessages.start.classList.toggle('hidden', gameStatus !== 'idle');
+
+  if (gameStatus !== 'idle') {
+    startBtn.classList.add('hidden');
+    restartBtn.classList.remove('hidden');
+  } else {
+    startBtn.classList.remove('hidden');
+    restartBtn.classList.add('hidden');
+  }
 }
 
 startBtn.addEventListener('click', () => {
   if (game.getStatus() === 'idle') {
     game.start();
-    startBtn.textContent = 'New Game';
   } else {
     game.restart();
   }
+  render();
+});
+
+restartBtn.addEventListener('click', () => {
+  game.restart();
   render();
 });
 
@@ -61,7 +70,7 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
-  switch (event.key) {
+  switch (e.key) {
     case 'ArrowLeft':
       game.moveLeft();
       break;

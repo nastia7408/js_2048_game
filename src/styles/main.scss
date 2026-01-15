@@ -11,7 +11,7 @@ body {
 }
 
 .field-cell {
-  background: #bea991;
+  background: #d3bfa8;
   width: 75px;
   height: 75px;
   border-radius: 10px;
@@ -108,11 +108,11 @@ h1 {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgb(231, 223, 214);
+  background: #f59563;
+  color: #fdeeda;
   width: 75px;
   height: 75px;
   border-radius: 5px;
-  color: rgb(102, 89, 71);
   box-sizing: border-box;
   font-size: 16px;
   margin: 0 8px 0 0;
@@ -138,12 +138,23 @@ h1 {
 
 .start {
   color: rgb(102, 89, 71);
-  background-color: #fbf8ef;
+  background: #fbe9b0;
+  border: 2px solid rgb(203, 199, 193);
+  font-size: 20px;
+
+  &:hover {
+    background-color: #f7e085;
+  }
+}
+
+.restart {
+  background: #fbe9b0;
+  color: #443623;
   border: 2px solid rgb(231, 223, 214);
   font-size: 20px;
 
   &:hover {
-    background: rgb(231, 223, 214);
+    background-color: #f7e085;
   }
 }
 
