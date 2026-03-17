@@ -1,63 +1,47 @@
 'use strict';
+import { GRID_SIZE, STATUS, WIN_TARGET } from './constants.js';
 
-/**
- * This class represents the game.
- * Now it has a basic structure, that is needed for testing.
- * Feel free to add more props and methods if needed.
- */
 export default class Game {
-  /**
-   * Creates a new game instance.
-   *
-   * @param {number[][]} initialState
-   * The initial state of the board.
-   * @default
-   * [[0, 0, 0, 0],
-   *  [0, 0, 0, 0],
-   *  [0, 0, 0, 0],
-   *  [0, 0, 0, 0]]
-   *
-   * If passed, the board will be initialized with the provided
-   * initial state.
-   */
   constructor(initialState) {
-    this.field = initialState || [
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-    ];
+    this.tileCounter = 0;
 
+    this.field =
+      initialState ||
+      Array(GRID_SIZE)
+        .fill()
+        .map(() => Array(GRID_SIZE).fill(null));
     this.score = 0;
-    this.gameStatus = 'idle';
+    this.gameStatus = STATUS.IDLE;
+  }
 
-    // eslint-disable-next-line no-console
-    console.log(initialState);
+  createTile(value) {
+    return { id: this.tileCounter++, value };
   }
 
   moveLeft() {
     const prevState = JSON.stringify(this.field);
 
-    this.field = this.field.map((row) => {
-      const filteredRow = row.filter((cell) => cell !== 0);
+    for (let r = 0; r < GRID_SIZE; r++) {
+      const row = this.field[r].filter((cell) => cell !== null);
+      const newRow = Array(GRID_SIZE).fill(null);
 
-      for (let i = 0; i < filteredRow.length - 1; i++) {
-        if (filteredRow[i] === filteredRow[i + 1]) {
-          filteredRow[i] *= 2;
-          this.score += filteredRow[i];
-          filteredRow[i + 1] = 0;
-          i++;
+      for (let i = 0; i < row.length; i++) {
+        if (i < row.length - 1 && row[i].value === row[i + 1].value) {
+          const mergedValue = row[i].value * 2;
+
+          newRow[i] = {
+            ...row[i],
+            value: mergedValue,
+            mergedFrom: [row[i], row[i + 1]],
+          };
+          this.score += mergedValue;
+          row.splice(i + 1, 1);
+        } else {
+          newRow[i] = row[i];
         }
       }
-
-      const resultRow = filteredRow.filter((cell) => cell !== 0);
-
-      while (resultRow.length < 4) {
-        resultRow.push(0);
-      }
-
-      return resultRow;
-    });
+      this.field[r] = newRow;
+    }
 
     if (prevState !== JSON.stringify(this.field)) {
       this.addRandomTile();
@@ -66,11 +50,9 @@ export default class Game {
     }
   }
   moveRight() {
-    this.field = this.field.map((row) => row.reverse());
-
+    this.reverse();
     this.moveLeft();
-
-    this.field = this.field.map((row) => row.reverse());
+    this.reverse();
   }
   moveUp() {
     this.transpose();
@@ -83,112 +65,80 @@ export default class Game {
     this.transpose();
   }
 
-  /**
-   * @returns {number}
-   */
-  getScore() {
-    return this.score;
+  reverse() {
+    this.field = this.field.map((row) => row.reverse());
+  }
+  transpose() {
+    this.field = this.field[0].map((_, c) => this.field.map((row) => row[c]));
   }
 
-  /**
-   * @returns {number[][]}
-   */
-  getState() {
-    return this.field;
-  }
-
-  /**
-   * Returns the current game status.
-   *
-   * @returns {string} One of: 'idle', 'playing', 'win', 'lose'
-   *
-   * `idle` - the game has not started yet (the initial state);
-   * `playing` - the game is in progress;
-   * `win` - the game is won;
-   * `lose` - the game is lost
-   */
-  getStatus() {
-    return this.gameStatus;
-  }
-
-  /**
-   * Starts the game.
-   */
-  start() {
-    this.gameStatus = 'playing';
-    this.addRandomTile();
-    this.addRandomTile();
-  }
-
-  /**
-   * Resets the game.
-   */
-
-  // Add your own methods here
   addRandomTile() {
-    const emptyCells = [];
+    const empty = [];
 
-    for (let r = 0; r < 4; r++) {
-      for (let c = 0; c < 4; c++) {
-        if (this.field[r][c] === 0) {
-          emptyCells.push({ r, c });
+    for (let r = 0; r < GRID_SIZE; r++) {
+      for (let c = 0; c < GRID_SIZE; c++) {
+        if (!this.field[r][c]) {
+          empty.push({ r, c });
         }
       }
     }
 
-    if (emptyCells.length > 0) {
-      const randomCell =
-        emptyCells[Math.floor(Math.random() * emptyCells.length)];
+    if (empty.length > 0) {
+      const { r, c } = empty[Math.floor(Math.random() * empty.length)];
 
-      this.field[randomCell.r][randomCell.c] = Math.random() < 0.1 ? 4 : 2;
+      this.field[r][c] = this.createTile(Math.random() < 0.1 ? 4 : 2);
     }
   }
 
-  transpose() {
-    this.field = this.field[0].map((_, colIndex) => {
-      return this.field.map((row) => row[colIndex]);
-    });
-  }
-
   checkWin() {
-    const has2048 = this.field.some((row) => row.includes(2048));
-
-    if (has2048) {
-      this.gameStatus = 'win';
+    if (this.field.flat().some((tile) => tile?.value === WIN_TARGET)) {
+      this.gameStatus = STATUS.WIN;
     }
   }
 
   checkGameOver() {
-    if (this.field.some((row) => row.includes(0))) {
+    if (this.field.flat().some((tile) => tile === null)) {
       return;
     }
 
-    for (let r = 0; r < 4; r++) {
-      for (let c = 0; c < 4; c++) {
-        const current = this.field[r][c];
+    for (let r = 0; r < GRID_SIZE; r++) {
+      for (let c = 0; c < GRID_SIZE; c++) {
+        const val = this.field[r][c].value;
 
-        if (c < 3 && current === this.field[r][c + 1]) {
+        if (c < GRID_SIZE - 1 && val === this.field[r][c + 1].value) {
           return;
         }
 
-        if (r < 3 && current === this.field[r + 1][c]) {
+        if (r < GRID_SIZE - 1 && val === this.field[r + 1][c].value) {
           return;
         }
       }
     }
+    this.gameStatus = STATUS.LOSE;
+  }
 
-    this.gameStatus = 'lose';
+  start() {
+    this.gameStatus = STATUS.PLAYING;
+    this.addRandomTile();
+    this.addRandomTile();
   }
 
   restart() {
-    this.field = [
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-    ];
+    this.field = Array(GRID_SIZE)
+      .fill()
+      .map(() => Array(GRID_SIZE).fill(null));
     this.score = 0;
-    this.gameStatus = 'idle';
+    this.gameStatus = STATUS.IDLE;
     this.start();
+  }
+
+  getState() {
+    return this.field;
+  }
+  getScore() {
+    return this.score;
+  }
+  getStatus() {
+    return this.gameStatus;
   }
 }

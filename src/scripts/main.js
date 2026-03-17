@@ -1,91 +1,99 @@
 import Game from '../modules/Game.class.js';
-// Uncomment the next lines to use your game instance in the browser
-// const Game = require('../modules/Game.class');
-// const game = new Game();
-
-// Write your code here
 
 const game = new Game();
-
-const startBtn = document.querySelector('.start');
-const restartBtn = document.querySelector('.restart');
-const statusMessages = {
-  start: document.querySelector('.message-start'),
-  win: document.querySelector('.message-win'),
-  lose: document.querySelector('.message-lose'),
-};
-
-const cells = document.querySelectorAll('.field-cell');
+const tileContainer = document.querySelector('#tile-container');
+const scoreEl = document.querySelector('.game-score');
 
 function render() {
-  const gameStatus = game.getStatus();
-  const score = game.getScore();
   const state = game.getState();
 
-  document.querySelector('.game-score').textContent = score;
+  scoreEl.textContent = game.getScore();
 
-  const flatField = state.flat();
+  const activeIds = new Set();
 
-  cells.forEach((cell, index) => {
-    const value = flatField[index];
+  state.forEach((row, r) => {
+    row.forEach((tileData, c) => {
+      if (tileData) {
+        activeIds.add(tileData.id.toString());
 
-    cell.textContent = value !== 0 ? value : '';
+        let tileEl = document.getElementById(`tile-${tileData.id}`);
 
-    cell.className = 'field-cell';
+        if (!tileEl) {
+          tileEl = document.createElement('div');
+          tileEl.id = `tile-${tileData.id}`;
+          tileEl.textContent = tileData.value;
+          tileEl.className = `field-cell field-cell--${tileData.value} pos-${r}-${c} cell-appear`;
+          tileContainer.appendChild(tileEl);
+        } else {
+          tileEl.className = `field-cell field-cell--${tileData.value} pos-${r}-${c}`;
 
-    if (value > 0) {
-      cell.classList.add(`field-cell--${value}`);
+          if (tileEl.textContent !== tileData.value) {
+            tileEl.textContent = tileData.value;
+            tileEl.classList.add('cell-merge');
+
+            tileEl.onanimationend = () => {
+              tileEl.classList.remove('cell-merge');
+            };
+          }
+        }
+      }
+    });
+  });
+
+  const allElements = tileContainer.querySelectorAll('.field-cell');
+
+  allElements.forEach((el) => {
+    const id = el.id.replace('tile-', '');
+
+    if (!activeIds.has(id)) {
+      el.remove();
     }
   });
 
-  statusMessages.lose.classList.toggle('hidden', gameStatus !== 'lose');
-  statusMessages.win.classList.toggle('hidden', gameStatus !== 'win');
-  statusMessages.start.classList.toggle('hidden', gameStatus !== 'idle');
-
-  if (gameStatus !== 'idle') {
-    startBtn.classList.add('hidden');
-    restartBtn.classList.remove('hidden');
-  } else {
-    startBtn.classList.remove('hidden');
-    restartBtn.classList.add('hidden');
-  }
+  updateStatusUI();
 }
 
-startBtn.addEventListener('click', () => {
-  if (game.getStatus() === 'idle') {
-    game.start();
-  } else {
-    game.restart();
-  }
-  render();
-});
+function updateStatusUI() {
+  const gameStatus = game.getStatus();
 
-restartBtn.addEventListener('click', () => {
-  game.restart();
-  render();
-});
+  document
+    .querySelector('.message-lose')
+    .classList.toggle('hidden', gameStatus !== 'lose');
+
+  document
+    .querySelector('.message-win')
+    .classList.toggle('hidden', gameStatus !== 'win');
+
+  document
+    .querySelector('.message-start')
+    .classList.toggle('hidden', gameStatus !== 'idle');
+
+  const isIdle = gameStatus === 'idle';
+
+  document.querySelector('.start').classList.toggle('hidden', !isIdle);
+  document.querySelector('.restart').classList.toggle('hidden', isIdle);
+}
 
 document.addEventListener('keydown', (e) => {
-  if (game.getStatus() !== 'playing') {
-    return;
-  }
+  const moves = {
+    ArrowLeft: 'moveLeft',
+    ArrowRight: 'moveRight',
+    ArrowUp: 'moveUp',
+    ArrowDown: 'moveDown',
+  };
 
-  switch (e.key) {
-    case 'ArrowLeft':
-      game.moveLeft();
-      break;
-    case 'ArrowRight':
-      game.moveRight();
-      break;
-    case 'ArrowUp':
-      game.moveUp();
-      break;
-    case 'ArrowDown':
-      game.moveDown();
-      break;
-    default:
-      return;
+  if (moves[e.key] && game.getStatus() === 'playing') {
+    game[moves[e.key]]();
+    render();
   }
-
-  render();
 });
+
+document.querySelector('.start').onclick = () => {
+  game.start();
+  render();
+};
+
+document.querySelector('.restart').onclick = () => {
+  game.restart();
+  render();
+};
